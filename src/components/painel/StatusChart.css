@@ -1,0 +1,83 @@
+.status-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.status-card {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #e8edf3;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.status-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.status-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.status-badge {
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  letter-spacing: 0.01em;
+}
+
+.status-pct {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.status-bar-bg {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 0.45rem;
+}
+
+.status-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-card-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.status-num {
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.status-clientes {
+  color: #718096;
+}
+
+.status-total {
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  color: #718096;
+  text-align: right;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e8edf3;
+}
+
+.status-vazio {
+  text-align: center;
+  color: #718096;
+  padding: 2rem;
+}

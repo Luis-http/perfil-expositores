@@ -1,0 +1,78 @@
+.tabela-wrapper {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  overflow-x: auto;
+}
+
+.tabela-implantados {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabela-implantados th {
+  background: #1f3a5f;
+  color: #fff;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tabela-implantados td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #edf2f7;
+  color: #2d3748;
+}
+
+.tabela-implantados tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-implantados tr:hover td {
+  background: #f7fafc;
+}
+
+.col-num {
+  text-align: center !important;
+}
+
+.col-pedido {
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.badge-tipo {
+  background: #ebf4ff;
+  color: #1f3a5f;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-dias {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.badge-dias.ok {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.badge-dias.alerta {
+  background: #feebc8;
+  color: #c05621;
+}
+
+.tabela-vazia {
+  text-align: center;
+  color: #718096;
+  padding: 2rem;
+}
