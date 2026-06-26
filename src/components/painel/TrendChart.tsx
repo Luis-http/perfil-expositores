@@ -55,7 +55,14 @@ export default function TrendChart({ implantados }: Props) {
     maintainAspectRatio: true,
     plugins: { legend: { display: false } },
     scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 } },
+      y: {
+        beginAtZero: true,
+        ticks: { maxTicksLimit: 6 },
+        grid: { color: "rgba(0,0,0,0.05)" },
+      },
+      x: {
+        grid: { display: false },
+      },
     },
   };
 
