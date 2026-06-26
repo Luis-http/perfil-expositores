@@ -21,220 +21,304 @@ function fmtDate(d: Date | null) {
   return d.toLocaleDateString("pt-BR");
 }
 
-async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: Pipeline[] }[]) {
-  // A4 Paisagem: 297 x 210 mm
-  const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const PW = 297;
-  const PH = 210;
-  const ML = 14; // margem esquerda
-  const MR = 14; // margem direita
-  const W = PW - ML - MR;
-  const dataEmissao = new Date().toLocaleDateString("pt-BR", {
-    day: "2-digit", month: "long", year: "numeric",
-  });
-
-  // ── Cabeçalho ──────────────────────────────────────────────
-  pdf.setFillColor(22, 49, 79);       // azul-marinho #16314f
-  pdf.rect(0, 0, PW, 22, "F");
-
-  // Tenta carregar logo mantendo proporção real
-  const logoUrl = window.location.origin + CONFIG.LOGO_PATH;
+async function carregarLogo(): Promise<{ dataUrl: string; w: number; h: number } | null> {
   try {
-    const resp = await fetch(logoUrl);
+    const url = window.location.origin + CONFIG.LOGO_PATH;
+    const resp = await fetch(url);
     const blob = await resp.blob();
     const dataUrl = await new Promise<string>((res) => {
       const fr = new FileReader();
       fr.onload = () => res(fr.result as string);
       fr.readAsDataURL(blob);
     });
-    // descobre dimensões reais para não distorcer
-    const { w: iw, h: ih } = await new Promise<{ w: number; h: number }>((res) => {
+    const { w, h } = await new Promise<{ w: number; h: number }>((res) => {
       const img = new Image();
       img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight });
       img.onerror = () => res({ w: 1, h: 1 });
       img.src = dataUrl;
     });
-    const maxH = 14; // altura máxima no PDF (mm)
-    const maxW = 40; // largura máxima
-    const ratio = iw / ih;
-    const logoH = maxH;
-    const logoW = Math.min(logoH * ratio, maxW);
-    const ext = CONFIG.LOGO_PATH.toLowerCase().endsWith(".svg") ? "SVG" : "PNG";
-    // fundo branco atrás do logo para garantir visibilidade
-    pdf.setFillColor(255, 255, 255);
-    pdf.roundedRect(ML - 1, 3, logoW + 4, logoH + 2, 2, 2, "F");
-    pdf.addImage(dataUrl, ext, ML + 1, 4, logoW, logoH);
+    return { dataUrl, w, h };
   } catch {
-    // logo não carregou — segue sem ela
+    return null;
+  }
+}
+
+async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: Pipeline[] }[]) {
+  const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const PW = 297;
+  const PH = 210;
+  const ML = 12;
+  const MR = 12;
+  const W = PW - ML - MR;
+
+  const totalExp = pipeline.reduce((s, p) => s + p.quantidade, 0);
+  const totalClientes = pipeline.length;
+  const prontos = pipeline.filter(p => p.status === "Implantar").reduce((s, p) => s + p.quantidade, 0);
+  const dataEmissao = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const semana = `Semana de ${new Date().toLocaleDateString("pt-BR")}`;
+
+  // ══════════════════════════════════════════════════════════
+  // CABEÇALHO
+  // ══════════════════════════════════════════════════════════
+  pdf.setFillColor(22, 49, 79);
+  pdf.rect(0, 0, PW, 28, "F");
+
+  // Linha decorativa inferior do header
+  pdf.setFillColor(41, 128, 185);
+  pdf.rect(0, 27, PW, 1.2, "F");
+
+  // Logo
+  const logo = await carregarLogo();
+  let logoEndX = ML;
+  if (logo) {
+    const maxH = 18;
+    const maxW = 50;
+    const ratio = logo.w / logo.h;
+    const lh = maxH;
+    const lw = Math.min(lh * ratio, maxW);
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(ML - 1, 4.5, lw + 4, lh + 1, 2, 2, "F");
+    const ext = CONFIG.LOGO_PATH.toLowerCase().endsWith(".svg") ? "SVG" : "PNG";
+    pdf.addImage(logo.dataUrl, ext, ML + 1, 5, lw, lh);
+    logoEndX = ML + lw + 8;
   }
 
-  // Título no cabeçalho (offset maior para não sobrepor logo)
+  // Título
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(14);
+  pdf.setFontSize(16);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(CONFIG.NOME_EMPRESA, ML + 48, 10);
+  pdf.text(CONFIG.NOME_EMPRESA, logoEndX, 12);
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(160, 184, 216);
-  pdf.text("Relatório de Pipeline — A Entrar", ML + 48, 16);
+  pdf.text("Relatório Semanal de Pipeline — Lojas a Entrar", logoEndX, 19);
 
-  // Data de emissão alinhada à direita
-  pdf.setFont("helvetica", "italic");
+  // Data e semana (direita)
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text(semana, PW - MR, 12, { align: "right" });
+  pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   pdf.setTextColor(160, 184, 216);
-  pdf.text(`Emitido em ${dataEmissao}`, PW - MR, 14, { align: "right" });
+  pdf.text(`Emitido em ${dataEmissao}`, PW - MR, 19, { align: "right" });
 
-  // ── Totalizador resumo ──────────────────────────────────────
-  const totalGeral = pipeline.reduce((s, p) => s + p.quantidade, 0);
-  let y = 28;
+  // ══════════════════════════════════════════════════════════
+  // CARDS DE RESUMO
+  // ══════════════════════════════════════════════════════════
+  const cardY = 32;
+  const cardH = 20;
+  const cardGap = 5;
+  const cardW = (W - cardGap * 2) / 3;
 
-  pdf.setFillColor(240, 244, 248);
-  pdf.roundedRect(ML, y, W, 9, 2, 2, "F");
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8.5);
-  pdf.setTextColor(31, 58, 95);
-  pdf.text(
-    `Total no pipeline: ${totalGeral} expositores  ·  ${pipeline.length} clientes  ·  ${grupos.length} status`,
-    ML + 4, y + 6
-  );
-  y += 14;
+  const cards = [
+    { label: "TOTAL DE EXPOSITORES", valor: totalExp, sub: "no pipeline atual", cor: "#1f3a5f" as const },
+    { label: "CLIENTES EM NEGOCIAÇÃO", valor: totalClientes, sub: `em ${grupos.length} etapas`, cor: "#2980b9" as const },
+    { label: "PRONTOS PARA IMPLANTAR", valor: prontos, sub: "status: Implantar", cor: "#27ae60" as const },
+  ];
 
-  // ── Tabelas por status (duas colunas se couber) ─────────────
-  const COL_GAP = 6;
+  cards.forEach((c, i) => {
+    const cx = ML + i * (cardW + cardGap);
+    const [r, g, b] = hexToRgb(c.cor);
+
+    // Sombra simulada
+    pdf.setFillColor(220, 226, 234);
+    pdf.roundedRect(cx + 0.6, cardY + 0.6, cardW, cardH, 3, 3, "F");
+
+    // Card
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(cx, cardY, cardW, cardH, 3, 3, "F");
+
+    // Barra lateral colorida
+    pdf.setFillColor(r, g, b);
+    pdf.roundedRect(cx, cardY, 3.5, cardH, 1.5, 1.5, "F");
+    pdf.rect(cx + 2, cardY, 1.5, cardH, "F");
+
+    // Valor grande
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(24);
+    pdf.setTextColor(r, g, b);
+    pdf.text(String(c.valor), cx + 8, cardY + 13);
+
+    // Label
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7);
+    pdf.setTextColor(74, 85, 104);
+    pdf.text(c.label, cx + 8, cardY + 4.5);
+
+    // Sub
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(160, 174, 192);
+    pdf.text(c.sub, cx + 8, cardY + 18);
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // TABELAS POR STATUS
+  // ══════════════════════════════════════════════════════════
+  const tableY = cardY + cardH + 6;
+  const ROW_H = 6;
+  const HEAD_H = 8;
+  const COL_HEAD_H = 5.5;
+  const FOOT_H = 6.5;
+  const COL_GAP = 5;
   const COL_W = (W - COL_GAP) / 2;
 
-  // Altura estimada de cada grupo
-  const ROW_H = 6.5;
-  const GROUP_HEAD = 8;
-  const GROUP_FOOT = 7;
-
+  // distribui grupos em 2 colunas balanceadas por altura
   const alturaGrupo = (g: { itens: Pipeline[] }) =>
-    GROUP_HEAD + g.itens.length * ROW_H + GROUP_FOOT;
+    HEAD_H + COL_HEAD_H + g.itens.length * ROW_H + FOOT_H + 4;
 
-  // Distribui em 2 colunas
   const col1: typeof grupos = [];
   const col2: typeof grupos = [];
   let h1 = 0, h2 = 0;
   for (const g of grupos) {
     const h = alturaGrupo(g);
-    if (h1 <= h2) { col1.push(g); h1 += h + 4; }
-    else          { col2.push(g); h2 += h + 4; }
+    if (h1 <= h2) { col1.push(g); h1 += h; }
+    else          { col2.push(g); h2 += h; }
   }
 
   const desenharGrupo = (
     g: { status: string; itens: Pipeline[] },
-    x: number, startY: number, colW: number
+    x: number, sy: number, cw: number
   ): number => {
     const cor = STATUS_COLORS[g.status] ?? "#95a5a6";
-    const [r, g2, b] = hexToRgb(cor);
-    let cy = startY;
-
-    // Header do grupo
-    pdf.setFillColor(r, g2, b);
-    pdf.roundedRect(x, cy, colW, GROUP_HEAD, 1.5, 1.5, "F");
-
+    const [r, gv, b] = hexToRgb(cor);
     const subtotal = g.itens.reduce((s, p) => s + p.quantidade, 0);
+    let cy = sy;
+
+    // ── Header do grupo ──
+    pdf.setFillColor(r, gv, b);
+    pdf.roundedRect(x, cy, cw, HEAD_H, 2, 2, "F");
+    // cortar cantos inferiores
+    pdf.rect(x, cy + HEAD_H - 2, cw, 2, "F");
+
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8);
+    pdf.setFontSize(9);
     pdf.setTextColor(255, 255, 255);
-    pdf.text(g.status, x + 3, cy + 5.5);
+    pdf.text(g.status.toUpperCase(), x + 4, cy + 5.5);
+
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(7.5);
-    pdf.text(`${subtotal} expositores · ${g.itens.length} clientes`, x + colW - 3, cy + 5.5, { align: "right" });
-    cy += GROUP_HEAD;
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(
+      `${subtotal} expositores · ${g.itens.length} clientes`,
+      x + cw - 4, cy + 5.5, { align: "right" }
+    );
+    cy += HEAD_H;
 
-    // Cabeçalho da tabela
-    pdf.setFillColor(245, 248, 252);
-    pdf.rect(x, cy, colW, 5.5, "F");
+    // ── Cabeçalho da tabela ──
+    pdf.setFillColor(r, gv, b);
+    pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
+    pdf.rect(x, cy, cw, COL_HEAD_H, "F");
+    pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
+
+    pdf.setFillColor(245, 247, 250);
+    pdf.rect(x, cy, cw, COL_HEAD_H, "F");
+
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(7);
-    pdf.setTextColor(100, 116, 139);
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(r, gv, b);
+    const C = {
+      cliente: x + 3,
+      tipo: x + cw * 0.50,
+      qtd: x + cw * 0.70,
+      entrega: x + cw * 0.82,
+    };
+    pdf.text("CLIENTE",  C.cliente, cy + 4);
+    pdf.text("TIPO",     C.tipo,    cy + 4);
+    pdf.text("QTD",      C.qtd,     cy + 4, { align: "center" });
+    pdf.text("ENTREGA",  C.entrega, cy + 4);
+    cy += COL_HEAD_H;
 
-    const C = { cliente: x + 3, tipo: x + colW * 0.52, qtd: x + colW * 0.72, entrega: x + colW * 0.84 };
-    pdf.text("CLIENTE",           C.cliente, cy + 4);
-    pdf.text("TIPO",              C.tipo,    cy + 4);
-    pdf.text("QTD",               C.qtd,     cy + 4, { align: "center" });
-    pdf.text("ENTREGA",           C.entrega, cy + 4);
-    cy += 5.5;
-
-    // Linhas
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
+    // ── Linhas ──
     for (let i = 0; i < g.itens.length; i++) {
       const item = g.itens[i];
-      const rowY = cy + i * ROW_H;
+      const ry = cy + i * ROW_H;
 
       if (i % 2 === 0) {
-        pdf.setFillColor(252, 253, 255);
-        pdf.rect(x, rowY, colW, ROW_H, "F");
+        pdf.setFillColor(251, 252, 255);
+        pdf.rect(x, ry, cw, ROW_H, "F");
       }
 
-      pdf.setTextColor(30, 41, 59);
-      const clienteMax = colW * 0.48;
-      const nomeCliente = pdf.getTextWidth(item.cliente) > clienteMax - 4
-        ? pdf.splitTextToSize(item.cliente, clienteMax - 4)[0] + "…"
-        : item.cliente;
-      pdf.text(nomeCliente, C.cliente, rowY + ROW_H - 2);
-
-      pdf.setTextColor(31, 58, 95);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(7.5);
-      pdf.text(item.tipo, C.tipo, rowY + ROW_H - 2);
+      // Linha separadora
+      pdf.setDrawColor(230, 235, 242);
+      pdf.setLineWidth(0.2);
+      pdf.line(x, ry + ROW_H, x + cw, ry + ROW_H);
 
       pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(45, 55, 72);
+
+      const maxCli = cw * 0.46;
+      const nomeCliente = pdf.getTextWidth(item.cliente) > maxCli - 4
+        ? pdf.splitTextToSize(item.cliente, maxCli - 4)[0] + "…"
+        : item.cliente;
+      pdf.text(nomeCliente, C.cliente, ry + ROW_H - 1.8);
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7);
+      pdf.setTextColor(r, gv, b);
+      pdf.text(item.tipo, C.tipo, ry + ROW_H - 1.8);
+
+      pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8);
-      pdf.setTextColor(30, 41, 59);
-      pdf.text(String(item.quantidade), C.qtd, rowY + ROW_H - 2, { align: "center" });
-      pdf.text(fmtDate(item.dataEntrega), C.entrega, rowY + ROW_H - 2);
+      pdf.setTextColor(31, 58, 95);
+      pdf.text(String(item.quantidade), C.qtd, ry + ROW_H - 1.8, { align: "center" });
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(45, 55, 72);
+      pdf.text(fmtDate(item.dataEntrega), C.entrega, ry + ROW_H - 1.8);
     }
     cy += g.itens.length * ROW_H;
 
-    // Rodapé subtotal
-    pdf.setFillColor(r, g2, b, 0.12);
-    pdf.setFillColor(Math.min(r + 40, 255), Math.min(g2 + 40, 255), Math.min(b + 40, 255));
-    pdf.rect(x, cy, colW, GROUP_FOOT, "F");
+    // ── Rodapé subtotal ──
+    pdf.setFillColor(r, gv, b);
+    pdf.rect(x, cy, cw, FOOT_H, "F");
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(8);
-    pdf.setTextColor(r, g2, b);
-    pdf.text("Subtotal", x + colW * 0.68, cy + 4.8, { align: "right" });
-    pdf.text(String(subtotal), C.qtd, cy + 4.8, { align: "center" });
-    cy += GROUP_FOOT;
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("SUBTOTAL", x + cw * 0.68, cy + 4.3, { align: "right" });
+    pdf.setFontSize(10);
+    pdf.text(String(subtotal), C.qtd, cy + 4.5, { align: "center" });
+    cy += FOOT_H;
 
     // Borda do grupo
-    pdf.setDrawColor(r, g2, b);
-    pdf.setLineWidth(0.4);
-    pdf.roundedRect(x, startY, colW, cy - startY, 1.5, 1.5, "S");
+    pdf.setDrawColor(r, gv, b);
+    pdf.setLineWidth(0.5);
+    pdf.roundedRect(x, sy, cw, cy - sy, 2, 2, "S");
 
     return cy;
   };
 
-  // Desenha coluna 1
-  let yc1 = y;
-  for (const g of col1) {
-    yc1 = desenharGrupo(g, ML, yc1, COL_W) + 4;
-  }
+  let yc1 = tableY;
+  for (const g of col1) yc1 = desenharGrupo(g, ML, yc1, COL_W) + 4;
 
-  // Desenha coluna 2
-  let yc2 = y;
-  for (const g of col2) {
-    yc2 = desenharGrupo(g, ML + COL_W + COL_GAP, yc2, COL_W) + 4;
-  }
+  let yc2 = tableY;
+  for (const g of col2) yc2 = desenharGrupo(g, ML + COL_W + COL_GAP, yc2, COL_W) + 4;
 
-  // ── Rodapé da página ───────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
+  // RODAPÉ DA PÁGINA
+  // ══════════════════════════════════════════════════════════
   pdf.setFillColor(22, 49, 79);
-  pdf.rect(0, PH - 8, PW, 8, "F");
+  pdf.rect(0, PH - 9, PW, 9, "F");
+
+  // Linha decorativa topo rodapé
+  pdf.setFillColor(41, 128, 185);
+  pdf.rect(0, PH - 9, PW, 1, "F");
+
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(7.5);
   pdf.setTextColor(160, 184, 216);
-  pdf.text(`${CONFIG.NOME_EMPRESA} · Controle de Expositores`, ML, PH - 3);
+  pdf.text(`${CONFIG.NOME_EMPRESA} · Relatório Semanal de Pipeline`, ML, PH - 3.5);
   pdf.text(
-    `Total: ${totalGeral} expositores · ${pipeline.length} clientes`,
-    PW - MR, PH - 3, { align: "right" }
+    `Total: ${totalExp} expositores · ${totalClientes} clientes · ${grupos.length} etapas`,
+    PW - MR, PH - 3.5, { align: "right" }
   );
 
   const agora = new Date().toLocaleDateString("pt-BR");
-  pdf.save(`pipeline-expositores-${agora.replace(/\//g, "-")}.pdf`);
+  pdf.save(`pipeline-perfil-${agora.replace(/\//g, "-")}.pdf`);
 }
 
 export default function PipelinePage({ pipeline }: Props) {
