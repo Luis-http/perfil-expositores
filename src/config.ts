@@ -26,7 +26,7 @@ export const CONFIG = {
 
   // Nome exibido no cabeçalho
   NOME_EMPRESA: "Perfil Refrigeração",
-  SUBTITULO: "Controle de Expositores",
+  SUBTITULO: "Controle de Expositores — Setor de Vendas",
 
   // Quando true, exibe status exatamente como vem da planilha.
   // Quando false, normaliza para o padrão definido em STATUS_LABELS abaixo.
