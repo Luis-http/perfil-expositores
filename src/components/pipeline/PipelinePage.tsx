@@ -55,7 +55,24 @@ async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: P
   const totalClientes = pipeline.length;
   const prontos = pipeline.filter(p => p.status === "Implantar").reduce((s, p) => s + p.quantidade, 0);
   const dataEmissao = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-  const semana = `Semana de ${new Date().toLocaleDateString("pt-BR")}`;
+
+  // Intervalo segunda → sexta da semana atual
+  const hoje = new Date();
+  const diaSemana = hoje.getDay(); // 0=Dom,1=Seg,...,6=Sáb
+  const diffSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+  const segunda = new Date(hoje); segunda.setDate(hoje.getDate() + diffSegunda);
+  const sexta   = new Date(segunda); sexta.setDate(segunda.getDate() + 4);
+  const fmtCurto = (d: Date) => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const semana = `Semana de ${fmtCurto(segunda)} até ${fmtCurto(sexta)}`;
+
+  // Totais por tipo para o gráfico
+  const totaisTipo: Record<string, number> = {};
+  for (const p of pipeline) {
+    totaisTipo[p.tipo] = (totaisTipo[p.tipo] ?? 0) + p.quantidade;
+  }
+  const tiposOrdenados = Object.entries(totaisTipo).sort((a, b) => b[1] - a[1]);
+  const maxTipo = Math.max(...tiposOrdenados.map(([, v]) => v), 1);
+  const TIPO_CORES = ["#1f3a5f","#2980b9","#27ae60","#e67e22","#8e44ad","#16a085"];
 
   // ══════════════════════════════════════════════════════════
   // CABEÇALHO
@@ -155,9 +172,62 @@ async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: P
   });
 
   // ══════════════════════════════════════════════════════════
+  // GRÁFICO DE TIPOS (barras horizontais)
+  // ══════════════════════════════════════════════════════════
+  const chartY = cardY + cardH + 5;
+  const chartH = 28;
+  const chartW = W;
+
+  // Fundo do bloco
+  pdf.setFillColor(255, 255, 255);
+  pdf.roundedRect(ML, chartY, chartW, chartH, 2, 2, "F");
+  pdf.setDrawColor(230, 235, 242);
+  pdf.setLineWidth(0.3);
+  pdf.roundedRect(ML, chartY, chartW, chartH, 2, 2, "S");
+
+  // Título
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(7);
+  pdf.setTextColor(74, 85, 104);
+  pdf.text("EXPOSITORES POR TIPO — PIPELINE ATUAL", ML + 3, chartY + 5);
+
+  // Barras
+  const barAreaX = ML + 38;
+  const barAreaW = chartW - 42;
+  const barH = 3.2;
+  const barGap = (chartH - 9) / tiposOrdenados.length - barH;
+  const barGapAdj = Math.max(barGap, 0.8);
+
+  tiposOrdenados.forEach(([tipo, qtd], i) => {
+    const by = chartY + 8 + i * (barH + barGapAdj);
+    const bw = (qtd / maxTipo) * barAreaW;
+    const [r, g, b] = hexToRgb(TIPO_CORES[i % TIPO_CORES.length]);
+
+    // Label do tipo
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(45, 55, 72);
+    pdf.text(tipo, barAreaX - 2, by + barH - 0.8, { align: "right" });
+
+    // Barra de fundo
+    pdf.setFillColor(240, 244, 248);
+    pdf.roundedRect(barAreaX, by, barAreaW, barH, 1, 1, "F");
+
+    // Barra colorida
+    pdf.setFillColor(r, g, b);
+    pdf.roundedRect(barAreaX, by, bw, barH, 1, 1, "F");
+
+    // Valor à direita
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(r, g, b);
+    pdf.text(String(qtd), barAreaX + bw + 2, by + barH - 0.8);
+  });
+
+  // ══════════════════════════════════════════════════════════
   // TABELAS POR STATUS
   // ══════════════════════════════════════════════════════════
-  const tableY = cardY + cardH + 6;
+  const tableY = chartY + chartH + 4;
   const ROW_H = 6;
   const HEAD_H = 8;
   const COL_HEAD_H = 5.5;
