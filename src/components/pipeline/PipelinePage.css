@@ -60,11 +60,21 @@
   gap: 0.75rem;
 }
 
+.pipeline-print-logo-wrap {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  flex-shrink: 0;
+}
+
 .pipeline-print-logo {
-  height: 44px;
+  height: 40px;
   width: auto;
   object-fit: contain;
-  border-radius: 4px;
+  display: block;
 }
 
 .pipeline-print-title {

@@ -433,12 +433,14 @@ export default function PipelinePage({ pipeline }: Props) {
       <div className="pipeline-print-area">
         <div className="pipeline-print-header">
           <div className="pipeline-print-brand">
-            <img
-              src={CONFIG.LOGO_PATH}
-              alt="Logo"
-              className="pipeline-print-logo"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-            />
+            <div className="pipeline-print-logo-wrap">
+              <img
+                src={CONFIG.LOGO_PATH}
+                alt="Logo"
+                className="pipeline-print-logo"
+                onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = "none"; }}
+              />
+            </div>
             <div>
               <div className="pipeline-print-title">{CONFIG.NOME_EMPRESA}</div>
               <div className="pipeline-print-sub">Relatório de Pipeline — A Entrar</div>
