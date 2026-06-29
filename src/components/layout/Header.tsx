@@ -12,14 +12,16 @@ export default function Header({ modoDemo, onRecarregar, carregando }: Props) {
     <header className="header">
       <div className="header-inner">
         <div className="header-brand">
-          <img
-            src={CONFIG.LOGO_PATH}
-            alt="Logo"
-            className="header-logo"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
+          <div className="header-logo-wrap">
+            <img
+              src={CONFIG.LOGO_PATH}
+              alt="Logo"
+              className="header-logo"
+              onError={(e) => {
+                (e.target as HTMLImageElement).parentElement!.style.display = "none";
+              }}
+            />
+          </div>
           <div>
             <span className="header-title">{CONFIG.NOME_EMPRESA}</span>
             <span className="header-sub">{CONFIG.SUBTITULO}</span>
