@@ -52,7 +52,8 @@ export default function TrendChart({ implantados }: Props) {
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: true,
+    aspectRatio: 4,
     plugins: { legend: { display: false } },
     scales: {
       y: {

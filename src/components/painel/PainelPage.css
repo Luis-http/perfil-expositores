@@ -151,10 +151,6 @@
   grid-column: 1 / -1;
 }
 
-.chart-card.wide > div {
-  height: 220px;
-}
-
 .chart-card h3 {
   margin: 0 0 1rem;
   font-size: 0.9rem;
