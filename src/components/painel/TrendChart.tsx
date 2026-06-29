@@ -4,12 +4,11 @@ import {
   LinearScale,
   BarElement,
   Tooltip,
-  Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import type { Implantado } from "../../types";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 interface Props {
   implantados: Implantado[];
@@ -52,13 +51,12 @@ export default function TrendChart({ implantados }: Props) {
 
   const options = {
     responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 4,
+    maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { maxTicksLimit: 6 },
+        ticks: { maxTicksLimit: 5 },
         grid: { color: "rgba(0,0,0,0.05)" },
       },
       x: {
@@ -67,5 +65,9 @@ export default function TrendChart({ implantados }: Props) {
     },
   };
 
-  return <Bar data={data} options={options} />;
+  return (
+    <div style={{ height: "180px", position: "relative", overscrollBehavior: "none" }}>
+      <Bar data={data} options={options} />
+    </div>
+  );
 }
