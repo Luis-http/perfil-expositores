@@ -38,6 +38,7 @@ export default function ImplantadosPage({ implantados }: Props) {
       if (tipoFiltro && i.tipo !== tipoFiltro) return false;
       if (prazoFiltro === "ate30" && (i.diasAteEntrega === null || i.diasAteEntrega > 30)) return false;
       if (prazoFiltro === "mais30" && (i.diasAteEntrega === null || i.diasAteEntrega <= 30)) return false;
+      if ((di || df) && !i.dataEntrega) return false;
       if (di && i.dataEntrega && i.dataEntrega < di) return false;
       if (df && i.dataEntrega && i.dataEntrega > df) return false;
       return true;

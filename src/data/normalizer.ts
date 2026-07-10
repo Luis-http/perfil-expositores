@@ -5,21 +5,35 @@ import type { Implantado, Pipeline } from "../types";
 
 function parseDate(valor: string): Date | null {
   if (!valor || valor.trim() === "") return null;
-  const v = valor.trim();
+  // remove parte de hora se vier "dd/mm/yyyy hh:mm:ss"
+  const v = valor.trim().replace(/\s+\d{1,2}:\d{2}(:\d{2})?$/, "");
 
-  // aaaa-mm-dd
+  // aaaa-mm-dd (ISO)
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const d = new Date(v + "T00:00:00");
     return isNaN(d.getTime()) ? null : d;
   }
 
-  // dd/mm/aaaa ou dd/mm/aa
-  const parts = v.split("/");
-  if (parts.length === 3) {
-    let [dia, mes, ano] = parts.map(Number);
-    if (ano < 100) ano += ano >= 50 ? 1900 : 2000;
-    const d = new Date(ano, mes - 1, dia);
-    return isNaN(d.getTime()) ? null : d;
+  // dd/mm/aaaa ou mm/dd/aaaa ou variantes com "-"
+  const sep = v.includes("/") ? "/" : v.includes("-") ? "-" : null;
+  if (sep) {
+    const parts = v.split(sep).map(Number);
+    if (parts.length === 3) {
+      let [a, b, c] = parts;
+      // se o primeiro campo tem 4 dígitos: aaaa/mm/dd
+      if (a > 31) {
+        const d = new Date(a, b - 1, c);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      // se o terceiro campo tem 4 dígitos: dd/mm/aaaa (BR) ou mm/dd/aaaa (US)
+      // quando a > 12, só pode ser dia (BR)
+      // quando b > 12, só pode ser mês (US: a=mês, b=dia) → mas mês não pode ser > 12, então é dd/mm
+      // por padrão usamos BR (dd/mm/aaaa), que é o formato da planilha
+      let ano = c;
+      if (ano < 100) ano += ano >= 50 ? 1900 : 2000;
+      const d = new Date(ano, b - 1, a); // dd/mm
+      return isNaN(d.getTime()) ? null : d;
+    }
   }
 
   return null;
