@@ -13,7 +13,7 @@
 
 .busca-input {
   flex: 1;
-  min-width: 220px;
+  min-width: 200px;
   padding: 0.5rem 0.9rem;
   border: 1.5px solid #cbd5e0;
   border-radius: 8px;
@@ -134,4 +134,148 @@
   color: #a0aec0;
   padding: 0 0.2rem;
   font-size: 0.9rem;
+}
+
+/* ── Botão Filtros ─────────────────────────────────── */
+.btn-filtros {
+  background: #f0f4f8;
+  border: 1.5px solid #e2e8f0;
+  color: #4a5568;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn-filtros:hover, .btn-filtros.aberto {
+  background: #e2e8f0;
+  border-color: #1f3a5f;
+  color: #1f3a5f;
+}
+
+.btn-filtros.ativo {
+  background: #1f3a5f;
+  color: #fff;
+  border-color: #1f3a5f;
+}
+
+.btn-limpar {
+  background: transparent;
+  border: 1.5px solid #e53e3e;
+  color: #e53e3e;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-limpar:hover {
+  background: #fff5f5;
+}
+
+/* ── Painel de filtros ─────────────────────────────── */
+.filtros-painel {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 2rem;
+  align-items: flex-start;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.filtros-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.filtro-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filtro-select {
+  border: 1.5px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.88rem;
+  color: #2d3748;
+  background: #f7fafc;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.filtro-select:focus {
+  outline: none;
+  border-color: #1f3a5f;
+  box-shadow: 0 0 0 3px rgba(31,58,95,0.1);
+}
+
+.filtro-radio-group {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.filtro-radio-btn {
+  border: 1.5px solid #e2e8f0;
+  background: #f7fafc;
+  color: #4a5568;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.filtro-radio-btn:hover {
+  border-color: #1f3a5f;
+  color: #1f3a5f;
+}
+
+.filtro-radio-btn.ativo {
+  background: #1f3a5f;
+  color: #fff;
+  border-color: #1f3a5f;
+  font-weight: 700;
+}
+
+.filtro-datas {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filtro-date {
+  border: 1.5px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  color: #2d3748;
+  background: #f7fafc;
+  cursor: pointer;
+}
+
+.filtro-date:focus {
+  outline: none;
+  border-color: #1f3a5f;
+  box-shadow: 0 0 0 3px rgba(31,58,95,0.1);
+}
+
+.filtro-ate {
+  font-size: 0.82rem;
+  color: #a0aec0;
 }
