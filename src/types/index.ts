@@ -12,6 +12,7 @@ export interface Pipeline {
   cliente: string;
   tipo: string;
   quantidade: number;
+  pedido: string;
   dataEntrega: Date | null;
   status: string;
   statusOriginal: string;

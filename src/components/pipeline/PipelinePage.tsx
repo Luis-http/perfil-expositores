@@ -26,18 +26,18 @@ async function carregarLogo(): Promise<{ dataUrl: string; w: number; h: number }
     const url = window.location.origin + CONFIG.LOGO_PATH;
     const resp = await fetch(url);
     const blob = await resp.blob();
-    const dataUrl = await new Promise<string>((res) => {
-      const fr = new FileReader();
-      fr.onload = () => res(fr.result as string);
-      fr.readAsDataURL(blob);
-    });
-    const { w, h } = await new Promise<{ w: number; h: number }>((res) => {
-      const img = new Image();
-      img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight });
-      img.onerror = () => res({ w: 1, h: 1 });
-      img.src = dataUrl;
-    });
-    return { dataUrl, w, h };
+    // Redimensiona o logo via canvas para reduzir peso do PDF
+    const imgBitmap = await createImageBitmap(blob);
+    const maxDim = 200;
+    const scale = Math.min(maxDim / imgBitmap.width, maxDim / imgBitmap.height, 1);
+    const cw = Math.round(imgBitmap.width * scale);
+    const ch = Math.round(imgBitmap.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = cw; canvas.height = ch;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(imgBitmap, 0, 0, cw, ch);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+    return { dataUrl, w: cw, h: ch };
   } catch {
     return null;
   }
@@ -290,11 +290,13 @@ async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: P
     pdf.setFontSize(6.5);
     pdf.setTextColor(r, gv, b);
     const C = {
-      cliente: x + 3,
-      tipo: x + cw * 0.50,
-      qtd: x + cw * 0.70,
-      entrega: x + cw * 0.82,
+      pedido:  x + 3,
+      cliente: x + cw * 0.18,
+      tipo:    x + cw * 0.56,
+      qtd:     x + cw * 0.73,
+      entrega: x + cw * 0.83,
     };
+    pdf.text("PEDIDO",   C.pedido,  cy + 4);
     pdf.text("CLIENTE",  C.cliente, cy + 4);
     pdf.text("TIPO",     C.tipo,    cy + 4);
     pdf.text("QTD",      C.qtd,     cy + 4, { align: "center" });
@@ -316,26 +318,35 @@ async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: P
       pdf.setLineWidth(0.2);
       pdf.line(x, ry + ROW_H, x + cw, ry + ROW_H);
 
+      // Pedido
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7);
+      pdf.setTextColor(r, gv, b);
+      pdf.text(item.pedido || "—", C.pedido, ry + ROW_H - 1.8);
+
+      // Cliente
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(7.5);
       pdf.setTextColor(45, 55, 72);
-
-      const maxCli = cw * 0.46;
-      const nomeCliente = pdf.getTextWidth(item.cliente) > maxCli - 4
-        ? pdf.splitTextToSize(item.cliente, maxCli - 4)[0] + "…"
+      const maxCli = cw * 0.36;
+      const nomeCliente = pdf.getTextWidth(item.cliente) > maxCli
+        ? pdf.splitTextToSize(item.cliente, maxCli)[0] + "…"
         : item.cliente;
       pdf.text(nomeCliente, C.cliente, ry + ROW_H - 1.8);
 
+      // Tipo
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(7);
       pdf.setTextColor(r, gv, b);
       pdf.text(item.tipo, C.tipo, ry + ROW_H - 1.8);
 
+      // Qtd
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8);
       pdf.setTextColor(31, 58, 95);
       pdf.text(String(item.quantidade), C.qtd, ry + ROW_H - 1.8, { align: "center" });
 
+      // Entrega
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(7.5);
       pdf.setTextColor(45, 55, 72);
@@ -387,8 +398,11 @@ async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: P
     PW - MR, PH - 3.5, { align: "right" }
   );
 
-  const agora = new Date().toLocaleDateString("pt-BR");
-  pdf.save(`pipeline-perfil-${agora.replace(/\//g, "-")}.pdf`);
+  const agora = new Date();
+  const dd = String(agora.getDate()).padStart(2, "0");
+  const mm = String(agora.getMonth() + 1).padStart(2, "0");
+  const aaaa = agora.getFullYear();
+  pdf.save(`Expositores Para Entrar ${dd}-${mm}-${aaaa}.pdf`);
 }
 
 export default function PipelinePage({ pipeline }: Props) {

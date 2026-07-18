@@ -31,12 +31,12 @@ export const SAMPLE_IMPLANTADOS: Implantado[] = [
 ];
 
 export const SAMPLE_PIPELINE: Pipeline[] = [
-  { cliente: "Supermercado Futuro", tipo: "Vertical", quantidade: 4, dataEntrega: new Date(2025, 4, 15), status: "Implantar", statusOriginal: "Implantar" },
-  { cliente: "Padaria Nova Era", tipo: "Vitrine", quantidade: 2, dataEntrega: new Date(2025, 4, 20), status: "Implantar", statusOriginal: "Implantar" },
-  { cliente: "Minimercado Brilhante", tipo: "Semivertical", quantidade: 1, dataEntrega: new Date(2025, 5, 1), status: "Configuração engenharia", statusOriginal: "Configuração engenharia" },
-  { cliente: "Hipermercado Total", tipo: "Combinado", quantidade: 6, dataEntrega: new Date(2025, 5, 10), status: "Configuração engenharia", statusOriginal: "Configuração engenharia" },
-  { cliente: "Açougue Premium", tipo: "Mesa refrigerada", quantidade: 3, dataEntrega: new Date(2025, 5, 15), status: "Aguardando documentação", statusOriginal: "Aguardando documentação" },
-  { cliente: "Mercado Moderno", tipo: "Ilha self", quantidade: 5, dataEntrega: new Date(2025, 5, 22), status: "Aguardando documentação", statusOriginal: "Aguardando documentação" },
-  { cliente: "Distribuidora Top Frio", tipo: "Vertical", quantidade: 3, dataEntrega: new Date(2025, 6, 5), status: "Aguardando informações", statusOriginal: "Aguardando informações" },
-  { cliente: "Empório Gelado", tipo: "Vitrine", quantidade: 2, dataEntrega: new Date(2025, 6, 12), status: "Aguardando documentação", statusOriginal: "Aguardando documentação" },
+  { cliente: "Supermercado Futuro", tipo: "Vertical", quantidade: 4, pedido: "250101", dataEntrega: new Date(2025, 4, 15), status: "Implantar", statusOriginal: "Implantar" },
+  { cliente: "Padaria Nova Era", tipo: "Vitrine", quantidade: 2, pedido: "250102", dataEntrega: new Date(2025, 4, 20), status: "Implantar", statusOriginal: "Implantar" },
+  { cliente: "Minimercado Brilhante", tipo: "Semivertical", quantidade: 1, pedido: "250103", dataEntrega: new Date(2025, 5, 1), status: "Configuração engenharia", statusOriginal: "Configuração engenharia" },
+  { cliente: "Hipermercado Total", tipo: "Combinado", quantidade: 6, pedido: "250104", dataEntrega: new Date(2025, 5, 10), status: "Configuração engenharia", statusOriginal: "Configuração engenharia" },
+  { cliente: "Açougue Premium", tipo: "Mesa refrigerada", quantidade: 3, pedido: "250105", dataEntrega: new Date(2025, 5, 15), status: "Aguardando documentação", statusOriginal: "Aguardando documentação" },
+  { cliente: "Mercado Moderno", tipo: "Ilha self", quantidade: 5, pedido: "250106", dataEntrega: new Date(2025, 5, 22), status: "Aguardando documentação", statusOriginal: "Aguardando documentação" },
+  { cliente: "Distribuidora Top Frio", tipo: "Vertical", quantidade: 3, pedido: "250107", dataEntrega: new Date(2025, 6, 5), status: "Aguardando informações", statusOriginal: "Aguardando informações" },
+  { cliente: "Empório Gelado", tipo: "Vitrine", quantidade: 2, pedido: "250108", dataEntrega: new Date(2025, 6, 12), status: "Aguardando documentação", statusOriginal: "Aguardando documentação" },
 ];

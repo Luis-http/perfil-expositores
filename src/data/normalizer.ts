@@ -143,6 +143,7 @@ export function normalizarPipeline(
   const iCliente = col("cliente")(headers);
   const iTipo = col("tipodeexpositor", "tipoexpositor", "tipo", "expositor")(headers);
   const iQtd = col("quantidade", "qtd", "qtde")(headers);
+  const iPedido = col("ndopedido", "nrdopedido", "pedido", "nopedido", "numeropedido", "nr", "numero")(headers);
   const iEntrega = col("datadeentrega", "dataentrega", "entrega", "dtentrega", "previsao")(headers);
   const iStatus = col("status", "situacao", "etapa")(headers);
 
@@ -154,6 +155,7 @@ export function normalizarPipeline(
         cliente: get(row, iCliente),
         tipo: normalizeTipo(get(row, iTipo)),
         quantidade: Math.max(0, parseInt(get(row, iQtd), 10) || 0),
+        pedido: get(row, iPedido),
         dataEntrega: parseDate(get(row, iEntrega)),
         status: normalizeStatus(statusOriginal),
         statusOriginal,
