@@ -26,9 +26,9 @@ async function carregarLogo(): Promise<{ dataUrl: string; w: number; h: number }
     const url = window.location.origin + CONFIG.LOGO_PATH;
     const resp = await fetch(url);
     const blob = await resp.blob();
-    // Redimensiona o logo via canvas para reduzir peso do PDF
+    // Redimensiona via canvas mantendo transparência (PNG)
     const imgBitmap = await createImageBitmap(blob);
-    const maxDim = 200;
+    const maxDim = 180;
     const scale = Math.min(maxDim / imgBitmap.width, maxDim / imgBitmap.height, 1);
     const cw = Math.round(imgBitmap.width * scale);
     const ch = Math.round(imgBitmap.height * scale);
@@ -36,7 +36,7 @@ async function carregarLogo(): Promise<{ dataUrl: string; w: number; h: number }
     canvas.width = cw; canvas.height = ch;
     const ctx = canvas.getContext("2d")!;
     ctx.drawImage(imgBitmap, 0, 0, cw, ch);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+    const dataUrl = canvas.toDataURL("image/png");
     return { dataUrl, w: cw, h: ch };
   } catch {
     return null;
@@ -95,7 +95,7 @@ async function gerarPDF(pipeline: Pipeline[], grupos: { status: string; itens: P
     const lw = Math.min(lh * ratio, maxW);
     pdf.setFillColor(255, 255, 255);
     pdf.roundedRect(ML - 1, 4.5, lw + 4, lh + 1, 2, 2, "F");
-    const ext = CONFIG.LOGO_PATH.toLowerCase().endsWith(".svg") ? "SVG" : "PNG";
+    const ext = "PNG";
     pdf.addImage(logo.dataUrl, ext, ML + 1, 5, lw, lh);
     logoEndX = ML + lw + 8;
   }
