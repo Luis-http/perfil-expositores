@@ -60,7 +60,7 @@ async function exportarPDF(lista: Implantado[], dataInicio: string, dataFim: str
     : null;
 
   const periodoLabel = dataInicio || dataFim
-    ? `Período: ${dataInicio ? new Date(dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "início"} até ${dataFim ? new Date(dataFim + "T00:00:00").toLocaleDateString("pt-BR") : "hoje"}`
+    ? `Liberação PCP: ${dataInicio ? new Date(dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "início"} até ${dataFim ? new Date(dataFim + "T00:00:00").toLocaleDateString("pt-BR") : "hoje"}`
     : "Todos os registros";
 
   // ── CABEÇALHO ──
@@ -326,9 +326,9 @@ export default function ImplantadosPage({ implantados }: Props) {
       if (tipoFiltro && i.tipo !== tipoFiltro) return false;
       if (prazoFiltro === "ate30" && (i.diasAteEntrega === null || i.diasAteEntrega > 30)) return false;
       if (prazoFiltro === "mais30" && (i.diasAteEntrega === null || i.diasAteEntrega <= 30)) return false;
-      if ((di || df) && !i.dataEntrega) return false;
-      if (di && i.dataEntrega && i.dataEntrega < di) return false;
-      if (df && i.dataEntrega && i.dataEntrega > df) return false;
+      if ((di || df) && !i.liberacaoPCP) return false;
+      if (di && i.liberacaoPCP && i.liberacaoPCP < di) return false;
+      if (df && i.liberacaoPCP && i.liberacaoPCP > df) return false;
       return true;
     });
 
@@ -423,7 +423,7 @@ export default function ImplantadosPage({ implantados }: Props) {
             </div>
           </div>
           <div className="filtros-grupo">
-            <label className="filtro-label">Data de implantação</label>
+            <label className="filtro-label">Data liberação PCP</label>
             <div className="filtro-datas">
               <input type="date" className="filtro-date" value={dataInicio} onChange={(e) => mudar(() => setDataInicio(e.target.value))} />
               <span className="filtro-ate">até</span>
