@@ -133,55 +133,29 @@ async function exportarPDF(lista: Implantado[], dataInicio: string, dataFim: str
     pdf.text(c.sub, cx + 8, cardY + 18);
   });
 
-  // ── TABELA ──
+  // ── TABELAS (demais | ilha self) ──
   const ROW_H = 6.2;
   const HEAD_H = 8;
   const COL_HEAD_H = 6;
-  const tableY = cardY + cardH + 6;
-  const cor = "#1f3a5f";
-  const [r, g, b] = hexToRgb(cor);
-
-  // Cabeçalho tabela
-  pdf.setFillColor(r, g, b);
-  pdf.roundedRect(ML, tableY, W, HEAD_H, 2, 2, "F");
-  pdf.rect(ML, tableY + HEAD_H - 2, W, 2, "F");
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(9);
-  pdf.setTextColor(255, 255, 255);
-  pdf.text("EXPOSITORES IMPLANTADOS", ML + 4, tableY + 5.5);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7.5);
-  pdf.text(`${totalExp} expositores · ${totalPedidos} pedidos`, ML + W - 4, tableY + 5.5, { align: "right" });
-
-  // Cabeçalho colunas
-  const C = {
-    pedido:   ML + 3,
-    cliente:  ML + W * 0.12,
-    tipo:     ML + W * 0.46,
-    qtd:      ML + W * 0.60,
-    libpcp:   ML + W * 0.67,
-    entrega:  ML + W * 0.80,
-    dias:     ML + W * 0.92,
-  };
-
-  let cy = tableY + HEAD_H;
-  pdf.setFillColor(245, 247, 250);
-  pdf.rect(ML, cy, W, COL_HEAD_H, "F");
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(6.5);
-  pdf.setTextColor(r, g, b);
-  pdf.text("PEDIDO",       C.pedido,  cy + 4.2);
-  pdf.text("CLIENTE",      C.cliente, cy + 4.2);
-  pdf.text("TIPO",         C.tipo,    cy + 4.2);
-  pdf.text("QTD",          C.qtd,     cy + 4.2, { align: "center" });
-  pdf.text("LIB. PCP",     C.libpcp,  cy + 4.2);
-  pdf.text("ENTREGA",      C.entrega, cy + 4.2);
-  pdf.text("DIAS",         C.dias,    cy + 4.2, { align: "center" });
-  cy += COL_HEAD_H;
-
-  // Linhas — com quebra de página automática
   const FOOTER_H = 9;
   const pageBottom = PH - FOOTER_H - 4;
+
+  const ilhas  = lista.filter(i => /ilha/i.test(i.tipo));
+  const demais = lista.filter(i => !/ilha/i.test(i.tipo));
+  const totalIlhas  = ilhas.reduce((s, i) => s + i.quantidade, 0);
+  const totalDemais = demais.reduce((s, i) => s + i.quantidade, 0);
+
+  const C = {
+    pedido:  ML + 3,
+    cliente: ML + W * 0.12,
+    tipo:    ML + W * 0.46,
+    qtd:     ML + W * 0.60,
+    libpcp:  ML + W * 0.67,
+    entrega: ML + W * 0.80,
+    dias:    ML + W * 0.92,
+  };
+
+  let pagina = 1;
 
   const desenharRodape = (pg: number) => {
     pdf.setFillColor(22, 49, 79);
@@ -194,105 +168,134 @@ async function exportarPDF(lista: Implantado[], dataInicio: string, dataFim: str
     pdf.text(`${CONFIG.NOME_EMPRESA} · Relatório de Expositores Implantados`, ML, PH - 3.2);
     pdf.text(`Página ${pg} · Total: ${totalExp} expositores · ${totalPedidos} pedidos`, PW - MR, PH - 3.2, { align: "right" });
   };
-
-  let pagina = 1;
   desenharRodape(pagina);
 
-  for (let i = 0; i < lista.length; i++) {
-    // Quebra de página
-    if (cy + ROW_H > pageBottom) {
-      pagina++;
-      pdf.addPage();
-      cy = 8;
-      // Recabeçalho
-      pdf.setFillColor(245, 247, 250);
-      pdf.rect(ML, cy, W, COL_HEAD_H, "F");
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(6.5);
-      pdf.setTextColor(r, g, b);
-      pdf.text("PEDIDO",   C.pedido,  cy + 4.2);
-      pdf.text("CLIENTE",  C.cliente, cy + 4.2);
-      pdf.text("TIPO",     C.tipo,    cy + 4.2);
-      pdf.text("QTD",      C.qtd,     cy + 4.2, { align: "center" });
-      pdf.text("LIB. PCP", C.libpcp,  cy + 4.2);
-      pdf.text("ENTREGA",  C.entrega, cy + 4.2);
-      pdf.text("DIAS",     C.dias,    cy + 4.2, { align: "center" });
-      cy += COL_HEAD_H;
-      desenharRodape(pagina);
-    }
-
-    const item = lista[i];
-    const ry = cy;
-
-    if (i % 2 === 0) {
-      pdf.setFillColor(251, 252, 255);
-      pdf.rect(ML, ry, W, ROW_H, "F");
-    }
-    pdf.setDrawColor(230, 235, 242);
-    pdf.setLineWidth(0.2);
-    pdf.line(ML, ry + ROW_H, ML + W, ry + ROW_H);
-
-    // Pedido
+  const desenharCabecalhoTabela = (
+    cy: number, titulo: string, subtotal: number, qtdLinhas: number, cor: string
+  ): number => {
+    const [r, g, b] = hexToRgb(cor);
+    pdf.setFillColor(r, g, b);
+    pdf.roundedRect(ML, cy, W, HEAD_H, 2, 2, "F");
+    pdf.rect(ML, cy + HEAD_H - 2, W, 2, "F");
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(7);
-    pdf.setTextColor(r, g, b);
-    pdf.text(item.pedido || "—", C.pedido, ry + ROW_H - 1.8);
-
-    // Cliente
+    pdf.setFontSize(9);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(titulo, ML + 4, cy + 5.5);
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(7);
-    pdf.setTextColor(45, 55, 72);
-    const maxCli = W * 0.32;
-    const nomeCli = pdf.getTextWidth(item.cliente) > maxCli
-      ? pdf.splitTextToSize(item.cliente, maxCli)[0] + "…"
-      : item.cliente;
-    pdf.text(nomeCli, C.cliente, ry + ROW_H - 1.8);
+    pdf.setFontSize(7.5);
+    pdf.text(`${subtotal} expositores · ${qtdLinhas} pedidos`, ML + W - 4, cy + 5.5, { align: "right" });
+    cy += HEAD_H;
 
-    // Tipo
+    pdf.setFillColor(245, 247, 250);
+    pdf.rect(ML, cy, W, COL_HEAD_H, "F");
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(6.5);
     pdf.setTextColor(r, g, b);
+    pdf.text("PEDIDO",   C.pedido,  cy + 4.2);
+    pdf.text("CLIENTE",  C.cliente, cy + 4.2);
+    pdf.text("TIPO",     C.tipo,    cy + 4.2);
+    pdf.text("QTD",      C.qtd,     cy + 4.2, { align: "center" });
+    pdf.text("LIB. PCP", C.libpcp,  cy + 4.2);
+    pdf.text("ENTREGA",  C.entrega, cy + 4.2);
+    pdf.text("DIAS",     C.dias,    cy + 4.2, { align: "center" });
+    return cy + COL_HEAD_H;
+  };
+
+  const desenharCabecalhoColuna = (cy: number, cor: string): number => {
+    const [r, g, b] = hexToRgb(cor);
+    pdf.setFillColor(245, 247, 250);
+    pdf.rect(ML, cy, W, COL_HEAD_H, "F");
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(r, g, b);
+    pdf.text("PEDIDO",   C.pedido,  cy + 4.2);
+    pdf.text("CLIENTE",  C.cliente, cy + 4.2);
+    pdf.text("TIPO",     C.tipo,    cy + 4.2);
+    pdf.text("QTD",      C.qtd,     cy + 4.2, { align: "center" });
+    pdf.text("LIB. PCP", C.libpcp,  cy + 4.2);
+    pdf.text("ENTREGA",  C.entrega, cy + 4.2);
+    pdf.text("DIAS",     C.dias,    cy + 4.2, { align: "center" });
+    return cy + COL_HEAD_H;
+  };
+
+  const desenharLinha = (item: Implantado, ry: number, idx: number, cor: string) => {
+    const [r, g, b] = hexToRgb(cor);
+    if (idx % 2 === 0) { pdf.setFillColor(251, 252, 255); pdf.rect(ML, ry, W, ROW_H, "F"); }
+    pdf.setDrawColor(230, 235, 242); pdf.setLineWidth(0.2);
+    pdf.line(ML, ry + ROW_H, ML + W, ry + ROW_H);
+
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(7); pdf.setTextColor(r, g, b);
+    pdf.text(item.pedido || "—", C.pedido, ry + ROW_H - 1.8);
+
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(7); pdf.setTextColor(45, 55, 72);
+    const maxCli = W * 0.32;
+    const nomeCli = pdf.getTextWidth(item.cliente) > maxCli ? pdf.splitTextToSize(item.cliente, maxCli)[0] + "…" : item.cliente;
+    pdf.text(nomeCli, C.cliente, ry + ROW_H - 1.8);
+
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(6.5); pdf.setTextColor(r, g, b);
     pdf.text(item.tipo, C.tipo, ry + ROW_H - 1.8);
 
-    // Qtd
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8);
-    pdf.setTextColor(31, 58, 95);
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(8); pdf.setTextColor(31, 58, 95);
     pdf.text(String(item.quantidade), C.qtd, ry + ROW_H - 1.8, { align: "center" });
 
-    // Lib PCP
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(7);
-    pdf.setTextColor(45, 55, 72);
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(7); pdf.setTextColor(45, 55, 72);
     pdf.text(fmtDate(item.liberacaoPCP), C.libpcp, ry + ROW_H - 1.8);
+    pdf.text(fmtDate(item.dataEntrega),  C.entrega, ry + ROW_H - 1.8);
 
-    // Entrega
-    pdf.text(fmtDate(item.dataEntrega), C.entrega, ry + ROW_H - 1.8);
-
-    // Dias
     if (item.diasAteEntrega !== null) {
       const dc = item.diasAteEntrega > 30 ? "#e67e22" : "#27ae60";
       const [dr, dg, db] = hexToRgb(dc);
       pdf.setFillColor(dr, dg, db);
       pdf.roundedRect(C.dias - 4, ry + 0.8, 10, ROW_H - 1.8, 1.5, 1.5, "F");
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(7);
-      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold"); pdf.setFontSize(7); pdf.setTextColor(255, 255, 255);
       pdf.text(String(item.diasAteEntrega), C.dias, ry + ROW_H - 1.8, { align: "center" });
     } else {
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(7);
-      pdf.setTextColor(160, 174, 192);
+      pdf.setFont("helvetica", "normal"); pdf.setFontSize(7); pdf.setTextColor(160, 174, 192);
       pdf.text("—", C.dias, ry + ROW_H - 1.8, { align: "center" });
     }
+  };
 
-    cy += ROW_H;
-  }
+  const desenharGrupo = (
+    grupo: Implantado[], titulo: string, subtotal: number, cor: string, cyInicio: number
+  ): number => {
+    let cy = cyInicio;
+    const tabStart = cy;
+    cy = desenharCabecalhoTabela(cy, titulo, subtotal, grupo.length, cor);
 
-  // Borda da tabela
-  pdf.setDrawColor(r, g, b);
-  pdf.setLineWidth(0.5);
-  pdf.roundedRect(ML, tableY, W, cy - tableY, 2, 2, "S");
+    for (let i = 0; i < grupo.length; i++) {
+      if (cy + ROW_H > pageBottom) {
+        // fecha borda da tabela até aqui
+        const [r, g, b] = hexToRgb(cor);
+        pdf.setDrawColor(r, g, b); pdf.setLineWidth(0.5);
+        pdf.roundedRect(ML, tabStart, W, cy - tabStart, 2, 2, "S");
+
+        pagina++; pdf.addPage();
+        desenharRodape(pagina);
+        cy = 8;
+        cy = desenharCabecalhoColuna(cy, cor);
+      }
+      desenharLinha(grupo[i], cy, i, cor);
+      cy += ROW_H;
+    }
+
+    // rodapé subtotal
+    const [r, g, b] = hexToRgb(cor);
+    pdf.setFillColor(r, g, b);
+    pdf.rect(ML, cy, W, 6.5, "F");
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(8); pdf.setTextColor(255, 255, 255);
+    pdf.text("SUBTOTAL", ML + W * 0.55, cy + 4.3, { align: "right" });
+    pdf.text(String(subtotal), C.qtd, cy + 4.5, { align: "center" });
+    cy += 6.5;
+
+    pdf.setDrawColor(r, g, b); pdf.setLineWidth(0.5);
+    pdf.roundedRect(ML, tabStart, W, cy - tabStart, 2, 2, "S");
+
+    return cy;
+  };
+
+  let cy = cardY + cardH + 6;
+  if (demais.length > 0) cy = desenharGrupo(demais, "DEMAIS EXPOSITORES", totalDemais, "#1f3a5f", cy) + 5;
+  if (ilhas.length > 0)  cy = desenharGrupo(ilhas,  "ILHA SELF",          totalIlhas,  "#16a085", cy);
 
   pdf.save(`Expositores Implantados ${dd}-${mm}-${aaaa}.pdf`);
 }
