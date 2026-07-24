@@ -5,7 +5,8 @@ import { normalizarImplantados, normalizarPipeline } from "./normalizer";
 import { SAMPLE_IMPLANTADOS, SAMPLE_PIPELINE } from "./sampleData";
 
 async function fetchCSV(url: string): Promise<{ headers: string[]; rows: string[][] }> {
-  const resp = await fetch(url);
+  const sep = url.includes("?") ? "&" : "?";
+  const resp = await fetch(`${url}${sep}_t=${Date.now()}`, { cache: "no-store" });
   if (!resp.ok) throw new Error(`HTTP ${resp.status} ao buscar CSV`);
   const texto = await resp.text();
 

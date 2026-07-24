@@ -162,6 +162,22 @@
   border-color: #1f3a5f;
 }
 
+.btn-pdf {
+  background: #1f3a5f;
+  color: #fff;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-pdf:hover:not(:disabled) { background: #16314f; }
+.btn-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .btn-limpar {
   background: transparent;
   border: 1.5px solid #e53e3e;
